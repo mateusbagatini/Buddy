@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -53,6 +55,7 @@ export default function AdminLibrary() {
   const { toast } = useToast()
   const supabase = createClientComponentClient()
   const { t } = useLanguage()
+  const [file, setFile] = useState<File | null>(null)
 
   // Load library items
   useEffect(() => {
@@ -321,6 +324,14 @@ export default function AdminLibrary() {
     setIsEditMode(false)
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0])
+    } else {
+      setFile(null)
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <AdminHeader />
@@ -391,7 +402,63 @@ export default function AdminLibrary() {
                 </form>
               </DialogContent>
             </Dialog>
-            <UploadFileDialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen} onSubmit={handleFileUpload} />
+            <Dialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen}>
+              <DialogTrigger asChild>
+                <Button disabled={!tableExists}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Information File
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>{isEditMode ? "Edit Library Item" : "Create New Library Item"}</DialogTitle>
+                  <DialogDescription>
+                    {isEditMode
+                      ? "Update the details of this library item."
+                      : "Add a new item to your library. This will be visible to all users."}
+                  </DialogDescription>
+                </DialogHeader>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    handleFileUpload(currentItem.title, currentItem.description, file)
+                  }}
+                >
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        value={currentItem.title || ""}
+                        onChange={(e) => setCurrentItem({ ...currentItem, title: e.target.value })}
+                        placeholder="Enter item title"
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={currentItem.description || ""}
+                        onChange={(e) => setCurrentItem({ ...currentItem, description: e.target.value })}
+                        placeholder="Enter item description (optional)"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="file">File</Label>
+                      <Input type="file" id="file" onChange={handleFileChange} />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={handleDialogClose}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">{isEditMode ? "Update" : "Create"}</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
