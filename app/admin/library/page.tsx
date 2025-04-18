@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { PlusCircle, ExternalLink, Pencil, Trash2, AlertCircle, Upload } from "lucide-react"
+import { PlusCircle, ExternalLink, Pencil, Trash2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AdminHeader } from "@/components/admin-header"
 import { useLanguage } from "@/contexts/language-context"
@@ -391,10 +391,7 @@ export default function AdminLibrary() {
                 </form>
               </DialogContent>
             </Dialog>
-            <Button disabled={!tableExists} onClick={() => setIsFileDialogOpen(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload File
-            </Button>
+            <UploadFileDialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen} onSubmit={handleFileUpload} />
           </div>
         </div>
 

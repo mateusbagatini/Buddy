@@ -1,7 +1,5 @@
 "use client"
 
-import { CardDescription } from "@/components/ui/card"
-
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -27,6 +25,9 @@ import { Badge } from "@/components/ui/badge"
 import { UserHeader } from "@/components/user-header"
 import { LibrarySidebar } from "@/components/library-sidebar"
 
+// Remove duplicate import
+// import { determineFlowStatus } from "@/lib/utils"
+
 type LibraryItem = {
   id: string
   title: string
@@ -40,7 +41,8 @@ type LibraryItem = {
 export default function UserDashboard() {
   // State for assigned action flows
   const [assignedFlows, setAssignedFlows] = useState([])
-  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
+  const [libraryLinks, setLibraryLinks] = useState<LibraryItem[]>([])
+  const [libraryFiles, setLibraryFiles] = useState<LibraryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState(null)
   const [error, setError] = useState("")
@@ -137,10 +139,15 @@ export default function UserDashboard() {
           return
         }
 
-        setLibraryItems(libraryData || [])
+        // Separate links and files
+        const links = libraryData.filter((item) => item.type === "link")
+        const files = libraryData.filter((item) => item.type === "file")
+
+        setLibraryLinks(links)
+        setLibraryFiles(files)
       } catch (error) {
         console.error("Error loading user data:", error)
-        setError(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`)
+        setError(`Unexpected error: ${error.message}`)
       } finally {
         setIsLoading(false)
       }
@@ -345,10 +352,12 @@ export default function UserDashboard() {
                             <div className="flex items-center justify-between text-sm">
                               <div className="flex items-center text-muted-foreground">
                                 <Clock className="mr-1 h-4 w-4" />
-                                <span>Deadline: {flow.deadline || "Not set"}</span>
+                                <span>
+                                  {t("common.deadline")}: {flow.deadline || t("common.notSet")}
+                                </span>
                               </div>
                               <div className="font-medium">
-                                {isCompleted ? (
+                                {isCompleted && isApproved ? (
                                   <span className="text-green-600 flex items-center">
                                     <CheckCircle className="mr-1 h-4 w-4" /> {t("common.completed")}
                                   </span>
@@ -376,13 +385,49 @@ export default function UserDashboard() {
                                 </span>
                               </div>
                             </div>
+
+                            {/* Display status badge */}
+                            <div className="flex justify-end">
+                              <div
+                                className={`px-2 py-1 rounded-full text-xs ${
+                                  flowStatus === "Completed"
+                                    ? "bg-green-100 text-green-800"
+                                    : flowStatus === "In Progress"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {displayStatus}
+                              </div>
+                            </div>
                           </div>
                         </CardContent>
                         <CardFooter>
-                          <div className="w-full flex justify-end">
+                          <div className="w-full flex justify-between">
+                            <div className="flex items-center">
+                              {libraryLinks.length > 0 && (
+                                <div className="mr-4">
+                                  <span className="text-sm font-medium">Useful Information:</span>
+                                  <ul className="list-disc ml-4 text-sm">
+                                    {libraryLinks.map((item) => (
+                                      <li key={item.id}>
+                                        <a
+                                          href={item.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:underline"
+                                        >
+                                          {item.title}
+                                        </a>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
                             <Link href={`/user/action-flows/${flow.id}`}>
-                              <Button variant={isCompleted ? "outline" : "default"}>
-                                {isCompleted ? t("actionFlow.viewDetails") : t("common.continue")}
+                              <Button variant={isCompleted && isApproved ? "outline" : "default"}>
+                                {isCompleted && isApproved ? t("actionFlow.viewDetails") : t("common.continue")}
                               </Button>
                             </Link>
                           </div>
@@ -405,25 +450,32 @@ export default function UserDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Library Files</CardTitle>
-                <CardDescription>Useful files for your tasks</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                {libraryItems
-                  .filter((item) => item.type === "file")
-                  .map((item) => (
-                    <div key={item.id} className="border-b last:border-b-0">
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center p-3 hover:bg-gray-50 transition-colors"
-                      >
-                        <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm font-medium truncate">{item.title}</span>
-                        <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
-                      </a>
-                    </div>
-                  ))}
+                {libraryFiles.length > 0 ? (
+                  <ul className="space-y-2">
+                    {libraryFiles.map((file) => (
+                      <li key={file.id} className="border-b p-3 last:border-b-0">
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between hover:bg-gray-50 rounded p-2 -m-2 transition-colors"
+                        >
+                          <div className="flex items-center">
+                            <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-800 truncate">{file.title}</span>
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-gray-500" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-500">No files available.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
