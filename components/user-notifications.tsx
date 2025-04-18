@@ -39,7 +39,7 @@ type Notification = {
   messageId?: string // Add this to track the specific message
 }
 
-export function UserNotifications({ actionFlows, userId }: { actionFlows: ActionFlow[]; userId: string }) {
+export function UserNotifications({ actionFlows = [], userId }: { actionFlows: ActionFlow[]; userId: string }) {
   const { t } = useLanguage()
   const [notifications, setNotifications] = useState<{
     messages: Notification[]
@@ -66,66 +66,68 @@ export function UserNotifications({ actionFlows, userId }: { actionFlows: Action
     const threeDaysFromNow = new Date()
     threeDaysFromNow.setDate(today.getDate() + 3)
 
+    if (!Array.isArray(actionFlows)) return
+
     actionFlows.forEach((flow) => {
-      if (flow.sections && Array.isArray(flow.sections)) {
-        flow.sections.forEach((section) => {
-          if (section.tasks && Array.isArray(section.tasks)) {
-            section.tasks.forEach((task) => {
-              // Check for tasks that need attention (were refused)
-              if (task.completed && task.approval_status === "refused") {
-                taskRefusalNotifications.push({
+      if (!flow || !flow.sections || !Array.isArray(flow.sections)) return
+
+      flow.sections.forEach((section) => {
+        if (!section || !section.tasks || !Array.isArray(section.tasks)) return
+
+        section.tasks.forEach((task) => {
+          // Check for tasks that need attention (were refused)
+          if (task && task.completed && task.approval_status === "refused") {
+            taskRefusalNotifications.push({
+              id: uuidv4(),
+              flowId: flow.id,
+              sectionId: section.id,
+              taskId: task.id,
+              taskTitle: `${task.title || "Untitled Task"}`,
+              flowTitle: flow.title || "Untitled Flow",
+            })
+          }
+
+          // Check for unread messages - only include actual user messages
+          if (task && task.messages && Array.isArray(task.messages)) {
+            task.messages.forEach((msg) => {
+              if (
+                msg &&
+                msg.sender_id !== userId &&
+                !msg.read &&
+                !msg.dismissed &&
+                msg.text &&
+                typeof msg.text === "string"
+              ) {
+                messageNotifications.push({
                   id: uuidv4(),
                   flowId: flow.id,
                   sectionId: section.id,
                   taskId: task.id,
-                  taskTitle: `${task.title}`,
-                  flowTitle: flow.title,
+                  taskTitle: `${task.title || "Untitled Task"}`,
+                  flowTitle: flow.title || "Untitled Flow",
+                  messageId: msg.id, // Store the message ID for dismissal
                 })
-              }
-
-              // Check for unread messages - only include actual user messages
-              if (task.messages && Array.isArray(task.messages)) {
-                task.messages.forEach((msg) => {
-                  if (
-                    msg &&
-                    msg.sender_id !== userId &&
-                    !msg.read &&
-                    !msg.dismissed &&
-                    msg.text &&
-                    typeof msg.text === "string"
-                  ) {
-                    messageNotifications.push({
-                      id: uuidv4(),
-                      flowId: flow.id,
-                      sectionId: section.id,
-                      taskId: task.id,
-                      taskTitle: `${task.title}`,
-                      flowTitle: flow.title,
-                      messageId: msg.id, // Store the message ID for dismissal
-                    })
-                  }
-                })
-              }
-
-              // Check for approaching deadlines
-              if (task.deadline && !task.completed) {
-                const deadline = new Date(task.deadline)
-                if (deadline > today && deadline <= threeDaysFromNow) {
-                  deadlineNotifications.push({
-                    id: uuidv4(),
-                    flowId: flow.id,
-                    sectionId: section.id,
-                    taskId: task.id,
-                    taskTitle: `${task.title}`,
-                    flowTitle: flow.title,
-                    deadline: new Date(task.deadline).toLocaleDateString(),
-                  })
-                }
               }
             })
           }
+
+          // Check for approaching deadlines
+          if (task && task.deadline && !task.completed) {
+            const deadline = new Date(task.deadline)
+            if (deadline > today && deadline <= threeDaysFromNow) {
+              deadlineNotifications.push({
+                id: uuidv4(),
+                flowId: flow.id,
+                sectionId: section.id,
+                taskId: task.id,
+                taskTitle: `${task.title || "Untitled Task"}`,
+                flowTitle: flow.title || "Untitled Flow",
+                deadline: new Date(task.deadline).toLocaleDateString(),
+              })
+            }
+          }
         })
-      }
+      })
     })
 
     setNotifications({

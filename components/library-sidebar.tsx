@@ -66,7 +66,7 @@ export function LibrarySidebar() {
             </div>
           ))}
         </div>
-      ) : items.length > 0 ? (
+      ) : items && items.length > 0 ? (
         <ul className="space-y-4">
           {items.map((item) => (
             <li key={item.id} className="border-b pb-3 last:border-b-0 last:pb-0">

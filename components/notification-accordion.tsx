@@ -24,7 +24,7 @@ type NotificationAccordionProps = {
   title: string
   icon: React.ReactNode
   notifications: Notification[]
-  type: "message" | "deadline"
+  type: "message" | "deadline" | "task_refused"
   onDismiss: (id: string) => void
   onDismissAll: () => void
 }
@@ -32,7 +32,7 @@ type NotificationAccordionProps = {
 export function NotificationAccordion({
   title,
   icon,
-  notifications,
+  notifications = [],
   type,
   onDismiss,
   onDismissAll,
@@ -41,11 +41,13 @@ export function NotificationAccordion({
   const { t } = useLanguage()
   const router = useRouter()
 
-  if (notifications.length === 0) {
+  if (!Array.isArray(notifications) || notifications.length === 0) {
     return null
   }
 
   const handleNotificationClick = (notification: Notification) => {
+    if (!notification) return
+
     // Determine the correct path based on user role
     const path = `/user/action-flows/${notification.flowId}?section=${notification.sectionId}&task=${notification.taskId}`
     router.push(path)
@@ -55,7 +57,7 @@ export function NotificationAccordion({
     <div className="mb-4 border rounded-lg overflow-hidden">
       <div
         className={`flex items-center justify-between p-3 cursor-pointer ${
-          type === "message" ? "bg-blue-100" : "bg-red-100"
+          type === "message" ? "bg-blue-100" : type === "task_refused" ? "bg-red-100" : "bg-orange-100"
         }`}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -90,11 +92,11 @@ export function NotificationAccordion({
             <div key={notification.id} onClick={() => handleNotificationClick(notification)} className="cursor-pointer">
               <NotificationBadge
                 type={type}
-                title={`${notification.flowTitle}`}
+                title={`${notification.flowTitle || "Untitled Flow"}`}
                 taskTitle={
                   notification.assignedTo
-                    ? `${notification.taskTitle} (${t("common.assignedTo")}: ${notification.assignedTo})`
-                    : notification.taskTitle
+                    ? `${notification.taskTitle || "Untitled Task"} (${t("common.assignedTo")}: ${notification.assignedTo})`
+                    : notification.taskTitle || "Untitled Task"
                 }
                 deadline={notification.deadline}
                 onDismiss={type === "message" ? () => onDismiss(notification.id) : undefined}

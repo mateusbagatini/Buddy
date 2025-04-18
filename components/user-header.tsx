@@ -35,7 +35,7 @@ export function UserHeader({ user, onSignOut }) {
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary/10 text-primary">{getInitials(user.name)}</AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium hidden md:inline-block">{user.name}</span>
+              <span className="text-sm font-medium hidden md:inline-block">{user?.name || "User"}</span>
             </div>
           )}
           <Button variant="outline" size="sm" onClick={onSignOut}>
