@@ -1,10 +1,21 @@
 "use client"
 
+import { CardDescription } from "@/components/ui/card"
+
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Clock, CheckCircle, AlertCircle, ListChecks, Layers, MessageCircle } from "lucide-react"
+import {
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  ListChecks,
+  Layers,
+  MessageCircle,
+  FileText,
+  ExternalLink,
+} from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
@@ -16,9 +27,20 @@ import { Badge } from "@/components/ui/badge"
 import { UserHeader } from "@/components/user-header"
 import { LibrarySidebar } from "@/components/library-sidebar"
 
+type LibraryItem = {
+  id: string
+  title: string
+  description: string | null
+  url: string
+  file_path: string | null
+  type: "link" | "file"
+  created_at: string
+}
+
 export default function UserDashboard() {
   // State for assigned action flows
   const [assignedFlows, setAssignedFlows] = useState([])
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState(null)
   const [error, setError] = useState("")
@@ -102,9 +124,23 @@ export default function UserDashboard() {
         })
 
         setAssignedFlows(processedFlows)
+
+        // Load library items
+        const { data: libraryData, error: libraryError } = await supabase
+          .from("library_items")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        if (libraryError) {
+          console.error("Error loading library items:", libraryError)
+          setError(`Error loading library items: ${libraryError.message}`)
+          return
+        }
+
+        setLibraryItems(libraryData || [])
       } catch (error) {
         console.error("Error loading user data:", error)
-        setError(`Unexpected error: ${error.message}`)
+        setError(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`)
       } finally {
         setIsLoading(false)
       }
@@ -309,12 +345,10 @@ export default function UserDashboard() {
                             <div className="flex items-center justify-between text-sm">
                               <div className="flex items-center text-muted-foreground">
                                 <Clock className="mr-1 h-4 w-4" />
-                                <span>
-                                  {t("common.deadline")}: {flow.deadline || t("common.notSet")}
-                                </span>
+                                <span>Deadline: {flow.deadline || "Not set"}</span>
                               </div>
                               <div className="font-medium">
-                                {isCompleted && isApproved ? (
+                                {isCompleted ? (
                                   <span className="text-green-600 flex items-center">
                                     <CheckCircle className="mr-1 h-4 w-4" /> {t("common.completed")}
                                   </span>
@@ -342,28 +376,13 @@ export default function UserDashboard() {
                                 </span>
                               </div>
                             </div>
-
-                            {/* Display status badge */}
-                            <div className="flex justify-end">
-                              <div
-                                className={`px-2 py-1 rounded-full text-xs ${
-                                  flowStatus === "Completed" && isApproved
-                                    ? "bg-green-100 text-green-800"
-                                    : flowStatus === "In Progress"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : "bg-gray-100 text-gray-800"
-                                }`}
-                              >
-                                {displayStatus}
-                              </div>
-                            </div>
                           </div>
                         </CardContent>
                         <CardFooter>
                           <div className="w-full flex justify-end">
                             <Link href={`/user/action-flows/${flow.id}`}>
-                              <Button variant={isCompleted && isApproved ? "outline" : "default"}>
-                                {isCompleted && isApproved ? t("actionFlow.viewDetails") : t("common.continue")}
+                              <Button variant={isCompleted ? "outline" : "default"}>
+                                {isCompleted ? t("actionFlow.viewDetails") : t("common.continue")}
                               </Button>
                             </Link>
                           </div>
@@ -381,8 +400,33 @@ export default function UserDashboard() {
             )}
           </div>
 
-          {/* Empty right column for visual separation */}
-          <div className="lg:col-span-1">{/* This column intentionally left empty as per requirements */}</div>
+          {/* Library files */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Library Files</CardTitle>
+                <CardDescription>Useful files for your tasks</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                {libraryItems
+                  .filter((item) => item.type === "file")
+                  .map((item) => (
+                    <div key={item.id} className="border-b last:border-b-0">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center p-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-sm font-medium truncate">{item.title}</span>
+                        <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+                      </a>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
     </div>

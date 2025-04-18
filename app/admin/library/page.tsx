@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,11 +17,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { PlusCircle, ExternalLink, Pencil, Trash2, AlertCircle } from "lucide-react"
+import { PlusCircle, ExternalLink, Pencil, Trash2, AlertCircle, Upload } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AdminHeader } from "@/components/admin-header"
 import { useLanguage } from "@/contexts/language-context"
 import Link from "next/link"
+import { UploadFileDialog } from "@/components/upload-file-dialog"
 
 // Define the LibraryItem type
 type LibraryItem = {
@@ -31,6 +30,8 @@ type LibraryItem = {
   title: string
   description: string | null
   url: string
+  file_path: string | null
+  type: "link" | "file"
   created_at: string
 }
 
@@ -39,12 +40,15 @@ export default function AdminLibrary() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [tableExists, setTableExists] = useState(true)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
+  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [currentItem, setCurrentItem] = useState<Partial<LibraryItem>>({
     title: "",
     description: "",
     url: "",
+    file_path: null,
+    type: "link",
   })
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -110,21 +114,10 @@ export default function AdminLibrary() {
     loadItems()
   }, [supabase])
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!tableExists) {
-      toast({
-        title: "Error",
-        description: "The library_items table does not exist. Please set it up first.",
-        variant: "destructive",
-      })
-      return
-    }
-
+  // Handle form submission for links
+  const handleLinkSubmit = async (title: string, description: string, url: string) => {
     try {
-      if (!currentItem.title || !currentItem.url) {
+      if (!title || !url) {
         toast({
           title: "Error",
           description: "Title and URL are required",
@@ -135,7 +128,7 @@ export default function AdminLibrary() {
 
       // Validate URL format
       try {
-        new URL(currentItem.url)
+        new URL(url)
       } catch (err) {
         toast({
           title: "Invalid URL",
@@ -150,9 +143,11 @@ export default function AdminLibrary() {
         const { error } = await supabase
           .from("library_items")
           .update({
-            title: currentItem.title,
-            description: currentItem.description,
-            url: currentItem.url,
+            title: title,
+            description: description,
+            url: url,
+            type: "link",
+            file_path: null,
             updated_at: new Date().toISOString(),
           })
           .eq("id", currentItem.id)
@@ -167,9 +162,11 @@ export default function AdminLibrary() {
             item.id === currentItem.id
               ? {
                   ...item,
-                  title: currentItem.title!,
-                  description: currentItem.description || null,
-                  url: currentItem.url!,
+                  title: title,
+                  description: description || null,
+                  url: url,
+                  type: "link",
+                  file_path: null,
                 }
               : item,
           ),
@@ -184,9 +181,10 @@ export default function AdminLibrary() {
         const { data, error } = await supabase
           .from("library_items")
           .insert({
-            title: currentItem.title,
-            description: currentItem.description,
-            url: currentItem.url,
+            title: title,
+            description: description,
+            url: url,
+            type: "link",
           })
           .select()
 
@@ -204,8 +202,8 @@ export default function AdminLibrary() {
       }
 
       // Reset form and close dialog
-      setCurrentItem({ title: "", description: "", url: "" })
-      setIsDialogOpen(false)
+      setCurrentItem({ title: "", description: "", url: "", file_path: null, type: "link" })
+      setIsLinkDialogOpen(false)
       setIsEditMode(false)
     } catch (err) {
       console.error("Error saving library item:", err)
@@ -214,6 +212,66 @@ export default function AdminLibrary() {
         description: `Failed to save library item: ${err instanceof Error ? err.message : String(err)}`,
         variant: "destructive",
       })
+    }
+  }
+
+  // Handle form submission for files
+  const handleFileUpload = async (title: string, description: string, file: File | null) => {
+    if (!file) {
+      toast({
+        title: "Error",
+        description: "Please select a file to upload",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      // Upload file to storage
+      const filePath = `library/${file.name}`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("task-files")
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) {
+        throw uploadError
+      }
+
+      // Get public URL
+      const { data: fileData } = supabase.storage.from("task-files").getPublicUrl(filePath)
+
+      // Create new item in database
+      const { data, error } = await supabase
+        .from("library_items")
+        .insert({
+          title: title,
+          description: description,
+          type: "file",
+          url: fileData.publicUrl, // Store the public URL
+          file_path: filePath, // Store the file path
+        })
+        .select()
+
+      if (error) {
+        throw error
+      }
+
+      // Update local state
+      setItems((prevItems) => [data[0], ...prevItems])
+
+      toast({
+        title: "Success",
+        description: "File uploaded and library item created successfully",
+      })
+    } catch (err) {
+      console.error("Error uploading file:", err)
+      toast({
+        title: "Error",
+        description: `Failed to upload file: ${err instanceof Error ? err.message : String(err)}`,
+        variant: "destructive",
+      })
+    } finally {
+      setIsFileDialogOpen(false)
     }
   }
 
@@ -251,13 +309,15 @@ export default function AdminLibrary() {
   const handleEdit = (item: LibraryItem) => {
     setCurrentItem(item)
     setIsEditMode(true)
-    setIsDialogOpen(true)
+    setIsLinkDialogOpen(item.type === "link")
+    setIsFileDialogOpen(item.type === "file")
   }
 
   // Handle dialog close
   const handleDialogClose = () => {
-    setIsDialogOpen(false)
-    setCurrentItem({ title: "", description: "", url: "" })
+    setIsLinkDialogOpen(false)
+    setIsFileDialogOpen(false)
+    setCurrentItem({ title: "", description: "", url: "", file_path: null, type: "link" })
     setIsEditMode(false)
   }
 
@@ -267,70 +327,75 @@ export default function AdminLibrary() {
       <main className="flex-1 container py-6 max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Library Management</h1>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                onClick={() => {
-                  setCurrentItem({ title: "", description: "", url: "" })
-                  setIsEditMode(false)
-                }}
-                disabled={!tableExists}
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create New Item
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>{isEditMode ? "Edit Library Item" : "Create New Library Item"}</DialogTitle>
-                <DialogDescription>
-                  {isEditMode
-                    ? "Update the details of this library item."
-                    : "Add a new item to your library. This will be visible to all users."}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      value={currentItem.title || ""}
-                      onChange={(e) => setCurrentItem({ ...currentItem, title: e.target.value })}
-                      placeholder="Enter item title"
-                      required
-                    />
+          <div className="flex gap-2">
+            <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+              <DialogTrigger asChild>
+                <Button disabled={!tableExists}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Information Link
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>{isEditMode ? "Edit Library Item" : "Create New Library Item"}</DialogTitle>
+                  <DialogDescription>
+                    {isEditMode
+                      ? "Update the details of this library item."
+                      : "Add a new item to your library. This will be visible to all users."}
+                  </DialogDescription>
+                </DialogHeader>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    handleLinkSubmit(currentItem.title, currentItem.description, currentItem.url)
+                  }}
+                >
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        value={currentItem.title || ""}
+                        onChange={(e) => setCurrentItem({ ...currentItem, title: e.target.value })}
+                        placeholder="Enter item title"
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={currentItem.description || ""}
+                        onChange={(e) => setCurrentItem({ ...currentItem, description: e.target.value })}
+                        placeholder="Enter item description (optional)"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="url">URL</Label>
+                      <Input
+                        id="url"
+                        value={currentItem.url || ""}
+                        onChange={(e) => setCurrentItem({ ...currentItem, url: e.target.value })}
+                        placeholder="https://example.com"
+                        required
+                      />
+                    </div>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={currentItem.description || ""}
-                      onChange={(e) => setCurrentItem({ ...currentItem, description: e.target.value })}
-                      placeholder="Enter item description (optional)"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="url">URL</Label>
-                    <Input
-                      id="url"
-                      value={currentItem.url || ""}
-                      onChange={(e) => setCurrentItem({ ...currentItem, url: e.target.value })}
-                      placeholder="https://example.com"
-                      required
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={handleDialogClose}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">{isEditMode ? "Update" : "Create"}</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={handleDialogClose}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">{isEditMode ? "Update" : "Create"}</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Button disabled={!tableExists} onClick={() => setIsFileDialogOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Upload File
+            </Button>
+          </div>
         </div>
 
         {error && (
@@ -380,15 +445,27 @@ export default function AdminLibrary() {
                     <p className="text-sm text-muted-foreground">{item.description || "No description provided."}</p>
                   </CardContent>
                   <CardFooter>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline flex items-center"
-                    >
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      {item.url}
-                    </a>
+                    {item.type === "link" ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline flex items-center"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        {item.url}
+                      </a>
+                    ) : (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline flex items-center"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        {item.file_path}
+                      </a>
+                    )}
                   </CardFooter>
                 </Card>
               ))
@@ -413,6 +490,7 @@ export default function AdminLibrary() {
           </div>
         )}
       </main>
+      <UploadFileDialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen} onSubmit={handleFileUpload} />
     </div>
   )
 }
