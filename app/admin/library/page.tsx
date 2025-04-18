@@ -237,7 +237,13 @@ export default function AdminLibrary() {
         .upload(filePath, file, { upsert: true })
 
       if (uploadError) {
-        throw uploadError
+        console.error("Error uploading file:", uploadError)
+        toast({
+          title: "Error",
+          description: `Failed to upload file: ${uploadError.message}`,
+          variant: "destructive",
+        })
+        return
       }
 
       // Get public URL
