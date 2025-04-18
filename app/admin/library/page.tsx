@@ -23,6 +23,7 @@ import { PlusCircle, ExternalLink, Pencil, Trash2, AlertCircle } from "lucide-re
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AdminHeader } from "@/components/admin-header"
 import { useLanguage } from "@/contexts/language-context"
+import Link from "next/link"
 
 // Define the LibraryItem type
 type LibraryItem = {
@@ -37,6 +38,7 @@ export default function AdminLibrary() {
   const [items, setItems] = useState<LibraryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [tableExists, setTableExists] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [currentItem, setCurrentItem] = useState<Partial<LibraryItem>>({
@@ -84,11 +86,19 @@ export default function AdminLibrary() {
 
         if (itemsError) {
           console.error("Error loading library items:", itemsError)
-          setError(`Error loading library items: ${itemsError.message}`)
+
+          // Check if the error is because the table doesn't exist
+          if (itemsError.message.includes("does not exist")) {
+            setTableExists(false)
+            setError("The library_items table does not exist. Please set it up first.")
+          } else {
+            setError(`Error loading library items: ${itemsError.message}`)
+          }
           return
         }
 
         setItems(data || [])
+        setTableExists(true)
       } catch (err) {
         console.error("Unexpected error:", err)
         setError(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`)
@@ -103,6 +113,15 @@ export default function AdminLibrary() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!tableExists) {
+      toast({
+        title: "Error",
+        description: "The library_items table does not exist. Please set it up first.",
+        variant: "destructive",
+      })
+      return
+    }
 
     try {
       if (!currentItem.title || !currentItem.url) {
@@ -255,6 +274,7 @@ export default function AdminLibrary() {
                   setCurrentItem({ title: "", description: "", url: "" })
                   setIsEditMode(false)
                 }}
+                disabled={!tableExists}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create New Item
@@ -320,11 +340,24 @@ export default function AdminLibrary() {
           </Alert>
         )}
 
+        {!tableExists && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              The library_items table does not exist. Please{" "}
+              <Link href="/setup-library-table" className="font-medium underline">
+                set up the library table
+              </Link>{" "}
+              first.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : (
+        ) : tableExists ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {items.length > 0 ? (
               items.map((item) => (
@@ -367,6 +400,16 @@ export default function AdminLibrary() {
                 </p>
               </div>
             )}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold mb-2">Library Table Not Found</h2>
+            <p className="text-muted-foreground mb-4">
+              The library_items table does not exist in your database. Please set it up first.
+            </p>
+            <Link href="/setup-library-table">
+              <Button>Setup Library Table</Button>
+            </Link>
           </div>
         )}
       </main>

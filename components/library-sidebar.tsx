@@ -5,6 +5,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { ExternalLink } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLanguage } from "@/contexts/language-context"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 type LibraryItem = {
   id: string
@@ -17,6 +19,7 @@ export function LibrarySidebar() {
   const [items, setItems] = useState<LibraryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [tableExists, setTableExists] = useState(true)
   const supabase = createClientComponentClient()
   const { t } = useLanguage()
 
@@ -33,11 +36,19 @@ export function LibrarySidebar() {
 
         if (itemsError) {
           console.error("Error loading library items:", itemsError)
-          setError(`Error loading library items: ${itemsError.message}`)
+
+          // Check if the error is because the table doesn't exist
+          if (itemsError.message.includes("does not exist")) {
+            setTableExists(false)
+            setError("The library_items table does not exist. Please set it up first.")
+          } else {
+            setError(`Error loading library items: ${itemsError.message}`)
+          }
           return
         }
 
         setItems(data || [])
+        setTableExists(true)
       } catch (err) {
         console.error("Unexpected error:", err)
         setError(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`)
@@ -49,8 +60,27 @@ export function LibrarySidebar() {
     loadLibraryItems()
   }, [supabase])
 
-  if (error) {
-    return <div className="p-4 text-sm text-red-500">Failed to load library items. Please try again later.</div>
+  if (!tableExists) {
+    return (
+      <div className="bg-white rounded-lg shadow p-4 h-full">
+        <h2 className="text-lg font-semibold mb-4">Library Resources</h2>
+        <div className="p-4 text-sm text-red-500 mb-4">The library_items table does not exist in your database.</div>
+        <Link href="/setup-library-table">
+          <Button size="sm" variant="outline">
+            Setup Library Table
+          </Button>
+        </Link>
+      </div>
+    )
+  }
+
+  if (error && tableExists) {
+    return (
+      <div className="bg-white rounded-lg shadow p-4 h-full">
+        <h2 className="text-lg font-semibold mb-4">Library Resources</h2>
+        <div className="p-4 text-sm text-red-500">Failed to load library items. Please try again later.</div>
+      </div>
+    )
   }
 
   return (
