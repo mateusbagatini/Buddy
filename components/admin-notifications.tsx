@@ -41,7 +41,7 @@ type Notification = {
   messageId?: string // Add this to track the specific message
 }
 
-export function AdminNotifications({ actionFlows, userId }: { actionFlows: ActionFlow[]; userId: string }) {
+export function AdminNotifications({ actionFlows = [], userId = "" }) {
   const { t } = useLanguage()
   const [notifications, setNotifications] = useState<{
     messages: Notification[]
@@ -62,13 +62,17 @@ export function AdminNotifications({ actionFlows, userId }: { actionFlows: Actio
   // Load users
   useEffect(() => {
     const loadUsers = async () => {
-      const { data } = await supabase.from("users").select("id,name")
-      if (data) {
-        const userMap = data.reduce((acc, user) => {
-          acc[user.id] = user.name
-          return acc
-        }, {})
-        setUsers(userMap)
+      try {
+        const { data } = await supabase.from("users").select("id,name")
+        if (data) {
+          const userMap = data.reduce((acc, user) => {
+            acc[user.id] = user.name
+            return acc
+          }, {})
+          setUsers(userMap)
+        }
+      } catch (error) {
+        console.error("Error loading users:", error)
       }
     }
 
@@ -80,6 +84,14 @@ export function AdminNotifications({ actionFlows, userId }: { actionFlows: Actio
     const messageNotifications: Notification[] = []
     const deadlineNotifications: Notification[] = []
 
+    if (!Array.isArray(actionFlows) || !userId) {
+      setNotifications({
+        messages: [],
+        deadlines: [],
+      })
+      return
+    }
+
     const today = new Date()
     const threeDaysFromNow = new Date()
     threeDaysFromNow.setDate(today.getDate() + 3)
@@ -87,7 +99,7 @@ export function AdminNotifications({ actionFlows, userId }: { actionFlows: Actio
     actionFlows.forEach((flow) => {
       if (flow.sections && Array.isArray(flow.sections)) {
         flow.sections.forEach((section) => {
-          if (section.tasks && Array.isArray(section.tasks)) {
+          if (section && section.tasks && Array.isArray(section.tasks)) {
             section.tasks.forEach((task) => {
               // Check for unread messages - only include actual user messages
               if (task.messages && Array.isArray(task.messages)) {

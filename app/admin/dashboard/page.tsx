@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PlusCircle, CheckCircle, Clock, Users, Trash2, AlertTriangle, MessageCircle } from "lucide-react"
+import { PlusCircle, CheckCircle, Clock, Users, Trash2, AlertTriangle } from "lucide-react"
 import { AdminHeader } from "@/components/admin-header"
 import {
   Dialog,
@@ -20,10 +20,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { refreshSession } from "@/lib/auth-utils"
 import { determineFlowStatus } from "@/lib/utils"
-import { useTranslation } from "@/hooks/use-translation"
-// Add this import at the top
-import { AdminNotifications } from "@/components/admin-notifications"
-import { Badge } from "@/components/ui/badge"
 
 export default function AdminDashboard() {
   // State for action flows
@@ -36,7 +32,6 @@ export default function AdminDashboard() {
   const [tableExists, setTableExists] = useState(true)
   const [userInfo, setUserInfo] = useState(null)
   const { toast } = useToast()
-  const { t } = useTranslation()
 
   const supabase = createClientComponentClient()
 
@@ -48,7 +43,7 @@ export default function AdminDashboard() {
         const refreshResult = await refreshSession()
 
         if (!refreshResult.success) {
-          setError(`Authentication error: ${refreshResult.error}`)
+          setError(`Authentication error: ${refreshResult.error || "Unknown error"}`)
           toast({
             title: "Authentication Error",
             description: "Your session has expired or you're not logged in. Please log in again.",
@@ -88,20 +83,19 @@ export default function AdminDashboard() {
         // Only show error if not admin, but continue loading data regardless
         if (profile.role !== "admin") {
           console.log("User role:", profile.role) // Add this for debugging
-          // Don't set error for admin users
-          // setError("You don't have admin privileges");
-          // toast({
-          //   title: "Access Warning",
-          //   description: "You don't have admin privileges, but you can still view the dashboard.",
-          //   variant: "warning",
-          // });
+          setError("You don't have admin privileges")
+          toast({
+            title: "Access Warning",
+            description: "You don't have admin privileges, but you can still view the dashboard.",
+            variant: "warning",
+          })
         }
 
         // Load data regardless of admin status - we'll handle permissions at the database level
         loadData(refreshResult.user.id)
       } catch (error) {
         console.error("Error checking user:", error)
-        setError(`Unexpected error: ${error.message}`)
+        setError(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`)
       }
     }
 
@@ -123,7 +117,7 @@ export default function AdminDashboard() {
         console.error("Error loading action flows:", flowsError)
 
         // Check if the table doesn't exist
-        if (flowsError.message.includes("does not exist")) {
+        if (flowsError.message && flowsError.message.includes("does not exist")) {
           setTableExists(false)
           setError(
             (prev) =>
@@ -155,7 +149,7 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error("Error loading data:", error)
-      setError((prev) => prev + `\nUnexpected error: ${error.message}`)
+      setError((prev) => prev + `\nUnexpected error: ${error instanceof Error ? error.message : String(error)}`)
       toast({
         title: "Error",
         description: "Failed to load data. Please try again.",
@@ -172,7 +166,7 @@ export default function AdminDashboard() {
 
   // Count total tasks across all action flows
   const countTasks = (flow) => {
-    if (!flow.sections) return 0
+    if (!flow || !flow.sections) return 0
 
     try {
       // Handle both string JSON and already parsed objects
@@ -181,7 +175,7 @@ export default function AdminDashboard() {
       if (!Array.isArray(sectionsArray)) return 0
 
       return sectionsArray.reduce((total, section) => {
-        if (!section.tasks) return total
+        if (!section || !section.tasks) return total
         return total + (Array.isArray(section.tasks) ? section.tasks.length : 0)
       }, 0)
     } catch (error) {
@@ -192,7 +186,7 @@ export default function AdminDashboard() {
 
   // Count completed tasks
   const countCompletedTasks = (flow) => {
-    if (!flow.sections) return 0
+    if (!flow || !flow.sections) return 0
 
     try {
       // Handle both string JSON and already parsed objects
@@ -201,8 +195,8 @@ export default function AdminDashboard() {
       if (!Array.isArray(sectionsArray)) return 0
 
       return sectionsArray.reduce((total, section) => {
-        if (!section.tasks || !Array.isArray(section.tasks)) return total
-        return total + section.tasks.filter((task) => task.completed).length
+        if (!section || !section.tasks || !Array.isArray(section.tasks)) return total
+        return total + section.tasks.filter((task) => task && task.completed).length
       }, 0)
     } catch (error) {
       console.error("Error counting completed tasks:", error)
@@ -254,50 +248,12 @@ export default function AdminDashboard() {
     return user ? user.name : "Unknown User"
   }
 
-  // Add this function to count unread messages in a flow
-  const countUnreadMessagesInFlow = (flow) => {
-    if (!flow.sections || !Array.isArray(flow.sections)) return 0
-
-    let count = 0
-    flow.sections.forEach((section) => {
-      if (section && Array.isArray(section.tasks)) {
-        section.tasks.forEach((task) => {
-          if (task && Array.isArray(task.messages)) {
-            count += task.messages.filter((msg) => msg && !msg.read && msg.sender_id !== userInfo?.user?.id).length
-          }
-        })
-      }
-    })
-
-    return count
-  }
-
-  // Add a function to check for approaching deadlines in tasks
-
-  // Add this function near the other utility functions:
-  const hasApproachingDeadlines = (flow) => {
-    if (!flow.sections || !Array.isArray(flow.sections)) return false
-
-    const today = new Date()
-    const threeDaysFromNow = new Date()
-    threeDaysFromNow.setDate(today.getDate() + 3)
-
-    return flow.sections.some((section) => {
-      if (!section || !Array.isArray(section.tasks)) return false
-      return section.tasks.some((task) => {
-        if (!task || !task.deadline || task.completed) return false
-        const deadline = new Date(task.deadline)
-        return deadline > today && deadline <= threeDaysFromNow
-      })
-    })
-  }
-
   return (
     <div className="flex min-h-screen flex-col">
       <AdminHeader />
       <main className="flex-1 container py-6 max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">{t("dashboard.adminDashboard")}</h1>
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <div className="flex gap-2">
             {!tableExists && (
               <Link href="/fix-action-flows-table">
@@ -310,7 +266,7 @@ export default function AdminDashboard() {
             <Link href="/admin/action-flows/create">
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                {t("actionFlow.createNew")}
+                Create New Action Flow
               </Button>
             </Link>
           </div>
@@ -322,9 +278,6 @@ export default function AdminDashboard() {
             <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
           </Alert>
         )}
-
-        {/* Add notifications at the top */}
-        {userInfo && !isLoading && <AdminNotifications actionFlows={actionFlows} userId={userInfo.user.id} />}
 
         {!tableExists && (
           <Alert variant="warning" className="mb-6 bg-yellow-50 border-yellow-200">
@@ -342,43 +295,39 @@ export default function AdminDashboard() {
         <div className="grid gap-4 md:grid-cols-3 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("dashboard.totalActionFlows")}</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Action Flows</CardTitle>
               <PlusCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{actionFlows.length}</div>
               <p className="text-xs text-muted-foreground">
-                +{actionFlows.length > 3 ? actionFlows.length - 3 : 0} {t("common.from")} {t("common.lastMonth")}
+                +{actionFlows.length > 3 ? actionFlows.length - 3 : 0} from last month
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("dashboard.completedFlows")}</CardTitle>
+              <CardTitle className="text-sm font-medium">Completed Flows</CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{completedFlows}</div>
-              <p className="text-xs text-muted-foreground">
-                +{completedFlows} {t("common.from")} {t("common.lastWeek")}
-              </p>
+              <p className="text-xs text-muted-foreground">+{completedFlows} from last week</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("dashboard.activeUsers")}</CardTitle>
+              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{activeUsers}</div>
-              <p className="text-xs text-muted-foreground">
-                +1 {t("common.newUser")} {t("common.thisWeek")}
-              </p>
+              <p className="text-xs text-muted-foreground">+1 new user this week</p>
             </CardContent>
           </Card>
         </div>
 
-        <h2 className="text-xl font-semibold mb-4">{t("dashboard.recentActionFlows")}</h2>
+        <h2 className="text-xl font-semibold mb-4">Recent Action Flows</h2>
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -390,9 +339,6 @@ export default function AdminDashboard() {
               const flowStatus = determineFlowStatus(flow)
               const isCompleted = flowStatus === "Completed"
 
-              // Count unread messages
-              const unreadMessages = countUnreadMessagesInFlow(flow)
-
               return (
                 <Card key={flow.id} className={isCompleted ? "border-green-300 bg-green-50" : ""}>
                   <CardContent className="p-6">
@@ -401,18 +347,8 @@ export default function AdminDashboard() {
                         <h3 className="font-semibold text-lg">{flow.title}</h3>
                         <div className="flex items-center text-sm text-muted-foreground mt-1">
                           <Clock className="mr-1 h-4 w-4" />
-                          <span>
-                            {t("common.deadline")}: {flow.deadline || t("common.notSet")}
-                          </span>
+                          <span>Deadline: {flow.deadline || "Not set"}</span>
                         </div>
-                        {hasApproachingDeadlines(flow) && (
-                          <div className="mt-2">
-                            <span className="text-xs font-medium text-orange-500 flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {t("common.approachingDeadlines")}
-                            </span>
-                          </div>
-                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <div
@@ -443,36 +379,25 @@ export default function AdminDashboard() {
                     </div>
                     <div className="mt-4 flex flex-wrap gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">{t("common.assignedTo")}:</span>{" "}
+                        <span className="text-muted-foreground">Assigned to:</span>{" "}
                         <span className="font-medium">{getUserName(flow.user_id)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{t("common.sections")}:</span>{" "}
+                        <span className="text-muted-foreground">Sections:</span>{" "}
                         <span className="font-medium">
                           {flow.sections && Array.isArray(flow.sections) ? flow.sections.length : 0}
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{t("common.tasks")}:</span>{" "}
+                        <span className="text-muted-foreground">Tasks:</span>{" "}
                         <span className="font-medium">{countTasks(flow)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{t("common.completed")}:</span>{" "}
+                        <span className="text-muted-foreground">Completed:</span>{" "}
                         <span className="font-medium">
                           {countCompletedTasks(flow)}/{countTasks(flow)}
                         </span>
                       </div>
-                      {unreadMessages > 0 && (
-                        <div className="flex items-center">
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800 flex items-center">
-                            <MessageCircle className="h-3 w-3 mr-1" />
-                            <span>
-                              {unreadMessages} {t("common.newMessage")}
-                              {unreadMessages === 1 ? "" : "s"}
-                            </span>
-                          </Badge>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>

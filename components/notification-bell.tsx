@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { useLanguage } from "@/contexts/language-context"
 import { loadDismissedMessages, isMessageDismissed } from "@/lib/message-utils"
 
-export function NotificationBell({ userId }: { userId: string }) {
+export function NotificationBell({ userId = "" }) {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
@@ -29,33 +29,36 @@ export function NotificationBell({ userId }: { userId: string }) {
     if (!userId) return
 
     const loadUserAndNotifications = async () => {
-      // Get user role
-      const { data: userData, error: userError } = await supabase.from("users").select("role").eq("id", userId).single()
+      try {
+        // Get user role
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", userId)
+          .single()
 
-      if (userError) {
-        console.error("Error getting user role:", userError)
-      } else if (userData) {
-        setUserRole(userData.role)
-      }
+        if (!userError && userData) {
+          setUserRole(userData.role)
+        }
 
-      // Load notifications - only message type
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("type", "message") // Only get message notifications
-        .order("created_at", { ascending: false })
-        .limit(20)
+        // Load notifications - only message type
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("type", "message") // Only get message notifications
+          .order("created_at", { ascending: false })
+          .limit(20)
 
-      if (error) {
+        if (!error && data) {
+          // Filter out dismissed notifications
+          const filteredNotifications = data.filter((n) => !isMessageDismissed(n.id)) || []
+          setNotifications(filteredNotifications)
+          setUnreadCount(filteredNotifications.filter((n) => !n.read).length || 0)
+        }
+      } catch (error) {
         console.error("Error loading notifications:", error)
-        return
       }
-
-      // Filter out dismissed notifications
-      const filteredNotifications = data?.filter((n) => !isMessageDismissed(n.id)) || []
-      setNotifications(filteredNotifications)
-      setUnreadCount(filteredNotifications?.filter((n) => !n.read).length || 0)
     }
 
     loadUserAndNotifications()
@@ -118,13 +121,10 @@ export function NotificationBell({ userId }: { userId: string }) {
         .eq("read", false)
         .eq("type", "message") // Only update message notifications
 
-      if (error) {
-        console.error("Error marking notifications as read:", error)
-        return
+      if (!error) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+        setUnreadCount(0)
       }
-
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-      setUnreadCount(0)
     } catch (error) {
       console.error("Error marking all notifications as read:", error)
     }
@@ -137,9 +137,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       if (!notification.read) {
         const { error } = await supabase.from("notifications").update({ read: true }).eq("id", notification.id)
 
-        if (error) {
-          console.error("Error marking notification as read:", error)
-        } else {
+        if (!error) {
           setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)))
           setUnreadCount((prev) => prev - 1)
         }

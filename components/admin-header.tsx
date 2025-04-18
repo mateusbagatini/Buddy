@@ -5,14 +5,12 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
-import { AdminNotifications } from "@/components/admin-notifications"
-import { useLanguage } from "@/contexts/language-context"
+import { LanguageSwitcher } from "@/components/language-switcher"
 
-export function AdminHeader() {
+export function AdminHeader({ user = null }) {
   const pathname = usePathname()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
-  const { t, setLanguage, language } = useLanguage()
 
   const handleSignOut = async () => {
     try {
@@ -22,13 +20,13 @@ export function AdminHeader() {
       console.error("Error signing out:", error)
       toast({
         title: "Error",
-        description: `Failed to sign out: ${error.message}`,
+        description: `Failed to sign out: ${error instanceof Error ? error.message : String(error)}`,
         variant: "destructive",
       })
     }
   }
 
-  const isActive = (path: string) => {
+  const isActive = (path) => {
     return pathname === path || pathname?.startsWith(`${path}/`)
   }
 
@@ -49,7 +47,7 @@ export function AdminHeader() {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {t("nav.dashboard")}
+                Dashboard
               </Link>
               <Link
                 href="/admin/users"
@@ -59,7 +57,7 @@ export function AdminHeader() {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {t("nav.users")}
+                Users
               </Link>
               <Link
                 href="/admin/library"
@@ -74,9 +72,9 @@ export function AdminHeader() {
             </nav>
           </div>
           <div className="flex items-center space-x-4">
-            <AdminNotifications />
+            <LanguageSwitcher />
             <Button variant="outline" size="sm" onClick={handleSignOut}>
-              {t("auth.signOut")}
+              Sign Out
             </Button>
           </div>
         </div>
