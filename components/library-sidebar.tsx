@@ -63,7 +63,7 @@ export function LibrarySidebar() {
   if (!tableExists) {
     return (
       <div className="bg-white rounded-lg shadow p-4 h-full">
-        <h2 className="text-lg font-semibold mb-4">Library Resources</h2>
+        <h2 className="text-lg font-semibold mb-4">Useful Resources</h2>
         <div className="p-4 text-sm text-red-500 mb-4">The library_items table does not exist in your database.</div>
         <Link href="/setup-library-table">
           <Button size="sm" variant="outline">
@@ -77,7 +77,7 @@ export function LibrarySidebar() {
   if (error && tableExists) {
     return (
       <div className="bg-white rounded-lg shadow p-4 h-full">
-        <h2 className="text-lg font-semibold mb-4">Library Resources</h2>
+        <h2 className="text-lg font-semibold mb-4">Useful Resources</h2>
         <div className="p-4 text-sm text-red-500">Failed to load library items. Please try again later.</div>
       </div>
     )
@@ -85,7 +85,7 @@ export function LibrarySidebar() {
 
   return (
     <div className="bg-white rounded-lg shadow p-4 h-full">
-      <h2 className="text-lg font-semibold mb-4">Library Resources</h2>
+      <h2 className="text-lg font-semibold mb-4">Useful Resources</h2>
 
       {isLoading ? (
         <div className="space-y-4">
@@ -118,6 +118,47 @@ export function LibrarySidebar() {
       ) : (
         <p className="text-sm text-gray-500">No library resources available.</p>
       )}
+
+      {/* Emergency Resources Section */}
+      <div className="mt-6">
+        <h2 className="text-lg font-semibold mb-4">Emergency Resources</h2>
+        <ul className="space-y-4">
+          <li>
+            <div className="flex items-start">
+              <ExternalLink className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0 text-red-500" />
+              <div>
+                <p className="font-medium text-red-500">
+                  <a
+                    href="https://chatgpt.com/g/g-67492574f6e88191a786f9be1c8fbf45-bousai-buddy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Bousai Buddy
+                  </a>
+                </p>
+                <p className="text-sm text-gray-500 mt-1">AI assistant for disaster preparedness in Japan</p>
+              </div>
+            </div>
+          </li>
+          <li>
+            <div className="flex items-start">
+              <ExternalLink className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0 text-red-500" />
+              <div>
+                <p className="font-medium text-red-500">
+                  <a
+                    href="https://chatgpt.com/g/g-67492574f6e88191a786f9be1c8fbf45-bousai-buddy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Evacuation Site Finder
+                  </a>
+                </p>
+                <p className="text-sm text-gray-500 mt-1">Find nearby evacuation sites in case of emergency</p>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
     </div>
   )
 }
