@@ -10,7 +10,7 @@ export async function generateAIResponse(message: string) {
   if (message.toLowerCase().includes("allergy")) {
     return {
       success: true,
-      text: `The recommended Doctor by our company is: Doctor: Masato Okada Day (Allergy / Collagen Diseases) | Available time - Fridays 9:30 - 11:50 or 13:30-16:50. Check [this link](https://intranet.example.com) for information on the intranet. Or download [this file](https://drive.google.com/file/d/1qWtqzypyJGejfuOSLHd2Kn6us2JzdUic/view?usp=sharing) to check this (full list of doctors). If you need further support, contact HR, or let me know if you need help contacting them.`,
+      text: `The recommended Doctor by our company is: Doctor: Masato Okada Day (Allergy / Collagen Diseases) | Available time - Fridays 9:30 - 11:50 or 13:30-16:50. Check (this link) for information on the intranet. Or download (this file) to check this (full list of doctors). If you need further support, contact HR, or let me know if you need help contacting them.`,
     }
   }
   try {
