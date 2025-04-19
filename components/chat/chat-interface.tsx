@@ -10,7 +10,6 @@ import { Send, X, Loader2 } from "lucide-react"
 import { ChatMessage } from "./chat-message"
 import { generateAIResponse } from "@/app/actions/ai-actions"
 import { useLanguage } from "@/contexts/language-context"
-import { useUser } from "@/hooks/use-user"
 
 type Message = {
   content: string
@@ -34,7 +33,6 @@ export function ChatInterface({ onClose }: ChatInterfaceProps) {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { t } = useLanguage()
-  const { user } = useUser()
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -55,8 +53,7 @@ export function ChatInterface({ onClose }: ChatInterfaceProps) {
     setIsLoading(true)
 
     try {
-      const userId = user?.id || "anonymous"
-      const response = await generateAIResponse(inputValue, userId)
+      const response = await generateAIResponse(inputValue)
 
       const aiMessage = {
         content: response.success ? response.text : "Sorry, I couldn't process your request. Please try again.",
