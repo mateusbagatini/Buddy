@@ -13,7 +13,7 @@ export async function generateAIResponse(message: string) {
       text: `your company recommends the following doctor to allergy cases 'Allergy / Collagen Diseases
 Doctor: Masato Okada
 Day: Friday
-Time: 13:30 – 16:50' . For more information check the doctors list on this file https://drive.google.com/file/d/1qWtqzypyJGejfuOSLHd2Kn6us2JzdUic/view?usp=sharing`,
+Time: 13:30 – 16:50' . For more information check the doctors list on this file [doctors.pdf](https://drive.google.com/file/d/1qWtqzypyJGejfuOSLHd2Kn6us2JzdUic/view?usp=sharing)`,
     }
   }
   try {
