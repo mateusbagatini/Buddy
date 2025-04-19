@@ -15,6 +15,7 @@ import { UserNotifications } from "@/components/user-notifications"
 import { Badge } from "@/components/ui/badge"
 import { UserHeader } from "@/components/user-header"
 import { LibrarySidebar } from "@/components/library-sidebar"
+import { ResourceSidebar } from "@/components/resource-sidebar"
 
 export default function UserDashboard() {
   // State for assigned action flows
@@ -242,14 +243,14 @@ export default function UserDashboard() {
         {/* Add notifications at the top */}
         {user && !isLoading && <UserNotifications actionFlows={assignedFlows} userId={user.id} />}
 
-        {/* New layout with sidebar */}
+        {/* New layout with both sidebars */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Library sidebar */}
+          {/* Information sidebar (left) */}
           <div className="lg:col-span-1">
             <LibrarySidebar />
           </div>
 
-          {/* Action flows */}
+          {/* Action flows (center) */}
           <div className="lg:col-span-2">
             {isLoading ? (
               <div className="flex justify-center items-center py-8">
@@ -381,8 +382,10 @@ export default function UserDashboard() {
             )}
           </div>
 
-          {/* Empty right column for visual separation */}
-          <div className="lg:col-span-1">{/* This column intentionally left empty as per requirements */}</div>
+          {/* Resources sidebar (right) */}
+          <div className="lg:col-span-1">
+            <ResourceSidebar />
+          </div>
         </div>
       </main>
     </div>

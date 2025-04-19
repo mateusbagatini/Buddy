@@ -69,6 +69,16 @@ export function AdminHeader({ user = null }) {
               >
                 Library
               </Link>
+              <Link
+                href="/admin/resources"
+                className={`px-3 py-2 text-sm font-medium rounded-md ${
+                  isActive("/admin/resources")
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                Resources
+              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
