@@ -18,6 +18,7 @@ type Notification = {
   flowTitle: string
   deadline?: string
   assignedTo?: string
+  messageId?: string
 }
 
 type NotificationAccordionProps = {

@@ -36,6 +36,7 @@ type Notification = {
   taskTitle: string
   flowTitle: string
   deadline?: string
+  assignedTo?: string
   messageId?: string // Add this to track the specific message
 }
 

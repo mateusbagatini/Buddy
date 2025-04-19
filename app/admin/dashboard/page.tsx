@@ -120,11 +120,10 @@ export default function AdminDashboard() {
         if (flowsError.message && flowsError.message.includes("does not exist")) {
           setTableExists(false)
           setError(
-            (prev) =>
-              prev + "\nThe action_flows table doesn't exist. Please visit /fix-action-flows-table to create it.",
+            (prev) => prev + "The action_flows table doesn't exist. Please visit /fix-action-flows-table to create it.",
           )
         } else {
-          setError((prev) => prev + `\nFailed to load action flows: ${flowsError.message}`)
+          setError((prev) => prev + `Failed to load action flows: ${flowsError.message}`)
         }
 
         toast({
@@ -143,13 +142,13 @@ export default function AdminDashboard() {
 
       if (usersError) {
         console.error("Error loading users:", usersError)
-        setError((prev) => prev + `\nFailed to load users: ${usersError.message}`)
+        setError((prev) => prev + `Failed to load users: ${usersError.message}`)
       } else {
         setUsers(usersData || [])
       }
     } catch (error) {
       console.error("Error loading data:", error)
-      setError((prev) => prev + `\nUnexpected error: ${error instanceof Error ? error.message : String(error)}`)
+      setError((prev) => prev + `Unexpected error: ${error instanceof Error ? error.message : String(error)}`)
       toast({
         title: "Error",
         description: "Failed to load data. Please try again.",

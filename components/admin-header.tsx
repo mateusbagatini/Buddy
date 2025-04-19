@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { NotificationBell } from "@/components/notification-bell"
 
 export function AdminHeader({ user = null }) {
   const pathname = usePathname()
@@ -73,6 +74,7 @@ export function AdminHeader({ user = null }) {
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
+            <NotificationBell userId={user?.id} />
             <Button variant="outline" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>

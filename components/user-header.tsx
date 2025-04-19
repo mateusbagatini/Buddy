@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useLanguage } from "@/contexts/language-context"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { NotificationBell } from "@/components/notification-bell"
 
 export function UserHeader({ user, onSignOut }) {
   const { t } = useLanguage()
@@ -38,6 +39,7 @@ export function UserHeader({ user, onSignOut }) {
               <span className="text-sm font-medium hidden md:inline-block">{user?.name || "User"}</span>
             </div>
           )}
+          <NotificationBell userId={user?.id} />
           <Button variant="outline" size="sm" onClick={onSignOut}>
             {t("common.logout")}
           </Button>

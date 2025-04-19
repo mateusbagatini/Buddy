@@ -406,7 +406,7 @@ export default function UserDashboard() {
                     )
                   })
                 ) : (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8">
                     <h2 className="text-xl font-semibold mb-2">{t("actionFlow.noTasksAssigned")}</h2>
                     <p className="text-muted-foreground">{t("actionFlow.noTasksAssignedMessage")}</p>
                   </div>

@@ -197,7 +197,7 @@ export function TaskChat({
               size="icon"
               onClick={handleSendMessage}
               disabled={isSending || !newMessage.trim()}
-              className="self-end"
+              aria-label="Send message"
             >
               <Send className="h-4 w-4" />
             </Button>
