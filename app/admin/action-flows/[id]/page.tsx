@@ -30,7 +30,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { AdminPreviewModal } from "@/components/admin-preview-modal"
@@ -41,6 +40,7 @@ import { hasUnreadMessages, countMessages } from "@/lib/message-utils"
 import { determineFlowStatus } from "@/lib/utils"
 // Import the necessary functions
 import { updateTaskApproval, getTaskApprovalStatus } from "@/lib/task-utils"
+import { supabase } from "@/lib/supabase-utils"
 
 export default function ActionFlowDetail({ params }) {
   const router = useRouter()
@@ -62,8 +62,6 @@ export default function ActionFlowDetail({ params }) {
 
   // Update the expandedTask state handling to fix any issues with task chat
   const [expandedTask, setExpandedTask] = useState(null)
-
-  const supabase = createClientComponentClient()
 
   // Set expandedTask based on URL parameters when component mounts
   useEffect(() => {

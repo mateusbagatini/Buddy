@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { supabase } from "@/lib/supabase-utils"
 import { CheckCircle, XCircle, RefreshCw, User } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -13,8 +13,6 @@ export default function FixActionFlowsTable() {
   const [logs, setLogs] = useState<string[]>([])
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [debugInfo, setDebugInfo] = useState<any>(null)
-
-  const supabase = createClientComponentClient()
 
   const addLog = (log: string) => {
     console.log(log)

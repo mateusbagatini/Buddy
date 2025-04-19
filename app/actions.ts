@@ -110,15 +110,18 @@ export async function createUserAction(userData: Omit<User, "id" | "created_at">
       revalidatePath("/admin/users")
       return { success: true, data: apiResult.user }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating user:", error)
-    const errorMessage = error instanceof Error ? error.message : String(error)
+    let errorMessage = "Failed to create user. Please try again."
+
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (typeof error === "string") {
+      errorMessage = error
+    }
 
     if (errorMessage.includes("already registered") || errorMessage.includes("already exists")) {
-      return {
-        success: false,
-        error: "This email is already registered. Please use a different email address.",
-      }
+      errorMessage = "This email is already registered. Please use a different email address."
     }
 
     return { success: false, error: errorMessage }
@@ -127,19 +130,39 @@ export async function createUserAction(userData: Omit<User, "id" | "created_at">
 
 // Other actions remain unchanged...
 export async function updateUserAction(id: string, updates: Partial<User>) {
-  // Existing code...
+  try {
+    // Existing code...
+  } catch (error: any) {
+    console.error("Error updating user:", error)
+    return { success: false, error: error.message || "Failed to update user. Please try again." }
+  }
 }
 
 export async function deleteUserAction(id: string) {
-  // Existing code...
+  try {
+    // Existing code...
+  } catch (error: any) {
+    console.error("Error deleting user:", error)
+    return { success: false, error: error.message || "Failed to delete user. Please try again." }
+  }
 }
 
 export async function createActionFlowAction(flowData: Omit<ActionFlow, "id" | "created_at">) {
-  // Existing code...
+  try {
+    // Existing code...
+  } catch (error: any) {
+    console.error("Error creating action flow:", error)
+    return { success: false, error: error.message || "Failed to create action flow. Please try again." }
+  }
 }
 
 export async function updateActionFlowAction(id: string, updates: Partial<ActionFlow>) {
-  // Existing code...
+  try {
+    // Existing code...
+  } catch (error: any) {
+    console.error("Error updating action flow:", error)
+    return { success: false, error: error.message || "Failed to update action flow. Please try again." }
+  }
 }
 
 export async function updateTaskCompletionAction(
@@ -148,9 +171,19 @@ export async function updateTaskCompletionAction(
   taskId: string,
   completed: boolean,
 ) {
-  // Existing code...
+  try {
+    // Existing code...
+  } catch (error: any) {
+    console.error("Error updating task completion:", error)
+    return { success: false, error: error.message || "Failed to update task completion. Please try again." }
+  }
 }
 
 export async function deleteActionFlowAction(id: string) {
-  // Existing code...
+  try {
+    // Existing code...
+  } catch (error: any) {
+    console.error("Error deleting action flow:", error)
+    return { success: false, error: error.message || "Failed to delete action flow. Please try again." }
+  }
 }

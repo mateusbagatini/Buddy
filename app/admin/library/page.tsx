@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { supabase } from "@/lib/supabase-utils"
 import { PlusCircle, ExternalLink, Pencil, Trash2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AdminHeader } from "@/components/admin-header"
@@ -47,7 +47,7 @@ export default function AdminLibrary() {
     url: "",
   })
   const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  //-const supabase = createClientComponentClient()
   const { t } = useLanguage()
 
   // Load library items

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { supabase } from "@/lib/supabase-utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
@@ -20,8 +20,6 @@ export default function SupabaseDiagnostics() {
   })
 
   const runDiagnostics = async () => {
-    const supabase = createClientComponentClient()
-
     // Reset results
     setResults({
       envVars: { status: "pending", message: "Checking environment variables..." },

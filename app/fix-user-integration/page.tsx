@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { supabase } from "@/lib/supabase-utils"
 import { CheckCircle, XCircle, RefreshCw } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -16,8 +16,6 @@ export default function FixUserIntegration() {
     missingProfiles: 0,
     fixedProfiles: 0,
   })
-
-  const supabase = createClientComponentClient()
 
   const addLog = (log: string) => {
     console.log(log)

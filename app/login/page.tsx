@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { supabase } from "@/lib/supabase-utils"
 import { useToast } from "@/components/ui/use-toast"
 
 export default function LoginPage() {
@@ -21,7 +21,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const supabase = createClientComponentClient()
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {

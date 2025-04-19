@@ -1,5 +1,5 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { createNotification } from "@/app/actions/notification-actions"
+import { supabase } from "@/lib/supabase-utils"
 
 export type ApprovalStatus = "pending" | "approved" | "refused" | "none"
 
@@ -10,8 +10,6 @@ export async function updateTaskCompletion(
   taskId: string,
   completed: boolean,
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClientComponentClient()
-
   try {
     // Get the current flow
     const { data: flow, error: flowError } = await supabase
@@ -95,8 +93,6 @@ export async function updateTaskApproval(
   adminId: string,
   adminName: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClientComponentClient()
-
   try {
     // Get the current flow
     const { data: flow, error: flowError } = await supabase

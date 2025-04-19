@@ -32,7 +32,7 @@ import { Switch } from "@/components/ui/switch"
 import { AdminHeader } from "@/components/admin-header"
 import { useToast } from "@/components/ui/use-toast"
 import { sendEmailNotification, createUserNotification } from "@/utils/notifications"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { supabase } from "@/lib/supabase-utils"
 import { createUserAction, updateUserAction, deleteUserAction } from "@/app/actions"
 import { useLanguage } from "@/contexts/language-context"
 import { useRouter } from "next/navigation"
@@ -43,7 +43,7 @@ export default function UsersManagement() {
   const [users, setUsers] = useState([])
   const { toast } = useToast()
   const { t } = useLanguage()
-  const supabase = createClientComponentClient()
+  //const supabase = createClientComponentClient()
   const router = useRouter()
 
   const [searchQuery, setSearchQuery] = useState("")

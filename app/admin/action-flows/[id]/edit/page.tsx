@@ -12,13 +12,13 @@ import { PlusCircle, Trash2, FileText, Type, Save, ArrowLeft, Smile, Plus } from
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AdminHeader } from "@/components/admin-header"
 import { useToast } from "@/components/ui/use-toast"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { v4 as uuidv4 } from "uuid"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { determineFlowStatus } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
+import { supabase } from "@/lib/supabase-utils"
 
 // Common emojis for productivity and tasks
 const COMMON_EMOJIS = [
@@ -118,8 +118,6 @@ export default function EditActionFlow({ params }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState("")
-
-  const supabase = createClientComponentClient()
 
   // Load action flow and users from Supabase
   useEffect(() => {
