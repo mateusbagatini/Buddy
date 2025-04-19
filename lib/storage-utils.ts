@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase-utils"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 /**
  * Ensures that a storage bucket exists in Supabase
@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase-utils"
  * @returns A boolean indicating if the bucket exists or was created successfully
  */
 export async function ensureBucketExists(bucketName: string): Promise<boolean> {
+  const supabase = createClientComponentClient()
+
   try {
     // First check if the bucket already exists
     const { data: buckets, error: getBucketError } = await supabase.storage.listBuckets()
@@ -48,6 +50,8 @@ export async function ensureBucketExists(bucketName: string): Promise<boolean> {
  * @returns The public URL of the uploaded file, or null if upload failed
  */
 export async function uploadFile(bucketName: string, filePath: string, file: File): Promise<string | null> {
+  const supabase = createClientComponentClient()
+
   try {
     // Ensure the bucket exists before uploading
     const bucketExists = await ensureBucketExists(bucketName)

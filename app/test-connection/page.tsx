@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase-utils"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export default function TestConnection() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
@@ -9,6 +9,7 @@ export default function TestConnection() {
 
   useEffect(() => {
     async function testConnection() {
+      const supabase = createClientComponentClient()
       try {
         // Simple query to test the connection
         const { data, error } = await supabase.from("users").select("count()", { count: "exact" })

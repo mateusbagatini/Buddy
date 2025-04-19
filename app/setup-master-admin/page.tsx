@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
-import { supabase } from "@/lib/supabase-utils"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export default function SetupMasterAdmin() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
@@ -24,6 +24,8 @@ export default function SetupMasterAdmin() {
     setMessage("Setting up master admin user...")
     setLogs([])
     setDebugInfo(null)
+
+    const supabase = createClientComponentClient()
 
     try {
       // Step 1: Check if the users table exists
@@ -225,6 +227,8 @@ export default function SetupMasterAdmin() {
     setStatus("loading")
     setMessage("Creating users table...")
     setLogs([])
+
+    const supabase = createClientComponentClient()
 
     try {
       addLog("Attempting to create users table via SQL...")

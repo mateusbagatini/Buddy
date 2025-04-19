@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, AlertCircle } from "lucide-react"
-import { supabase } from "@/lib/supabase-utils"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export default function SetupAdmin() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
@@ -15,6 +15,8 @@ export default function SetupAdmin() {
   const setupAdmin = async () => {
     setStatus("loading")
     setMessage("Setting up admin user...")
+
+    const supabase = createClientComponentClient()
 
     try {
       // Step 1: Create the user in auth

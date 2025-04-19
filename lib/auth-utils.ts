@@ -1,6 +1,8 @@
-import { supabase } from "@/lib/supabase-utils"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export async function refreshSession() {
+  const supabase = createClientComponentClient()
+
   try {
     // Try to refresh the session
     const { data, error } = await supabase.auth.refreshSession()
@@ -22,6 +24,8 @@ export async function refreshSession() {
 }
 
 export async function signInWithEmail(email: string, password: string) {
+  const supabase = createClientComponentClient()
+
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -45,6 +49,8 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 export async function signOut() {
+  const supabase = createClientComponentClient()
+
   try {
     const { error } = await supabase.auth.signOut()
 
@@ -61,6 +67,8 @@ export async function signOut() {
 }
 
 export async function getCurrentUser() {
+  const supabase = createClientComponentClient()
+
   try {
     const { data, error } = await supabase.auth.getUser()
 

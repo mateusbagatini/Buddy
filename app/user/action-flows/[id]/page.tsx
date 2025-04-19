@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, CheckCircle, Clock, Upload, FileText, Trash2, MessageCircle } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase } from "@/lib/supabase-utils"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useLanguage } from "@/contexts/language-context"
 import { TaskChat } from "@/components/task-chat"
@@ -46,6 +46,8 @@ export default function ActionFlowDetail({ params }) {
 
   // Initialize expandedTask state
   const [expandedTask, setExpandedTask] = useState(null)
+
+  const supabase = createClientComponentClient()
 
   // Set expandedTask based on URL parameters when component mounts
   useEffect(() => {
