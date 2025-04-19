@@ -1,7 +1,13 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+export const supabase = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+)
+
+// Export createClient as a named export
+export const createClient = createSupabaseClient
 
 // Types for our database tables
 export type User = {
@@ -65,6 +71,18 @@ export type LibraryItem = {
   title: string
   description: string | null
   url: string
+  created_at: string
+  updated_at: string
+}
+
+// FAQ type
+export type FAQ = {
+  id: string
+  question: string
+  answer: string
+  category: string | null
+  is_published: boolean
+  priority: number
   created_at: string
   updated_at: string
 }
@@ -424,4 +442,80 @@ export async function getCurrentUser() {
   }
 
   return profile as User
+}
+
+// FAQ functions
+export async function getFaqs(options?: { onlyPublished?: boolean; category?: string }) {
+  let query = supabase.from("faqs").select("*")
+
+  if (options?.onlyPublished) {
+    query = query.eq("is_published", true)
+  }
+
+  if (options?.category) {
+    query = query.eq("category", options.category)
+  }
+
+  query = query.order("priority", { ascending: false }).order("created_at", { ascending: false })
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("Error fetching FAQs:", error)
+    throw error
+  }
+
+  return data as FAQ[]
+}
+
+export async function getFaqById(id: string) {
+  const { data, error } = await supabase.from("faqs").select("*").eq("id", id).single()
+
+  if (error) {
+    console.error("Error fetching FAQ:", error)
+    throw error
+  }
+
+  return data as FAQ
+}
+
+export async function createFaq(faq: Omit<FAQ, "id" | "created_at" | "updated_at">) {
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from("faqs")
+    .insert([{ ...faq, created_at: now, updated_at: now }])
+    .select()
+
+  if (error) {
+    console.error("Error creating FAQ:", error)
+    throw error
+  }
+
+  return data[0] as FAQ
+}
+
+export async function updateFaq(id: string, updates: Partial<Omit<FAQ, "id" | "created_at">>) {
+  const { data, error } = await supabase
+    .from("faqs")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+
+  if (error) {
+    console.error("Error updating FAQ:", error)
+    throw error
+  }
+
+  return data[0] as FAQ
+}
+
+export async function deleteFaq(id: string) {
+  const { error } = await supabase.from("faqs").delete().eq("id", id)
+
+  if (error) {
+    console.error("Error deleting FAQ:", error)
+    throw error
+  }
+
+  return true
 }
