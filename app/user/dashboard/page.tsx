@@ -225,33 +225,66 @@ export default function UserDashboard() {
     }
   }
 
+  const contactInfo = [
+    {
+      title: "BOND",
+      name: "Bridging Overseas Network Development",
+      email: "bond-support@company.com",
+      phone: "+81-3-XXXX-XXXX",
+    },
+    {
+      title: "HR Support",
+      name: "Human Resources",
+      email: "hr-support@company.com",
+      phone: "+81-3-XXXX-XXXX",
+    },
+    {
+      title: "IT Helpdesk",
+      name: "IT Support",
+      email: "it-support@company.com",
+      phone: "+81-3-XXXX-XXXX",
+    },
+    {
+      title: "Office Manager",
+      name: "Facilities",
+      email: "facilities@company.com",
+      phone: "+81-3-XXXX-XXXX",
+    },
+    {
+      title: "Emergency Contact",
+      name: "24/7 Support",
+      email: "emergency@company.com",
+      phone: "+81-3-XXXX-XXXX",
+    },
+  ]
+
   return (
     <div className="flex min-h-screen flex-col">
       <UserHeader user={user} onSignOut={handleSignOut} />
       <main className="flex-1 container py-6 max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">{t("dashboard.myFlows")}</h1>
-        </div>
-
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Add notifications at the top */}
-        {user && !isLoading && <UserNotifications actionFlows={assignedFlows} userId={user.id} />}
-
-        {/* New layout with sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="flex">
           {/* Library sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:w-1/4 pr-6">
+            <h2 className="text-xl font-semibold mb-4">Resources</h2>
             <LibrarySidebar />
           </div>
 
           {/* Action flows */}
-          <div className="lg:col-span-2">
+          <div className="lg:w-2/4">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold">{t("dashboard.myFlows")}</h1>
+            </div>
+
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Add notifications at the top */}
+            {user && !isLoading && <UserNotifications actionFlows={assignedFlows} userId={user.id} />}
+
             {isLoading ? (
               <div className="flex justify-center items-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -382,8 +415,26 @@ export default function UserDashboard() {
             )}
           </div>
 
-          {/* Empty right column for visual separation */}
-          <div className="lg:col-span-1">{/* This column intentionally left empty as per requirements */}</div>
+          {/* Contact Information Sidebar */}
+          <div className="lg:w-1/4 pl-6">
+            <div className="bg-white rounded-lg shadow p-4">
+              <h2 className="text-lg font-semibold mb-4">Important Contacts</h2>
+              <ul className="space-y-4">
+                {contactInfo.map((contact, index) => (
+                  <li key={index} className="space-y-1">
+                    <h3 className="font-medium">{contact.title}</h3>
+                    <p className="text-sm text-gray-500">{contact.name}</p>
+                    <p className="text-sm text-blue-600">
+                      <a href={`mailto:${contact.email}`} className="hover:underline">
+                        {contact.email}
+                      </a>
+                    </p>
+                    <p className="text-sm text-gray-500">{contact.phone}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </main>
       <FloatingChatButton />
