@@ -6,6 +6,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "")
 
 export async function generateAIResponse(message: string) {
+  // Check if the user's message contains the word "allergy"
+  if (message.toLowerCase().includes("allergy")) {
+    return {
+      success: true,
+      text: `your company recommends the following doctor to allergy cases 'Allergy / Collagen Diseases
+Doctor: Masato Okada
+Day: Friday
+Time: 13:30 – 16:50' . For more information check the doctors list on this file /doctors-list.pdf`,
+    }
+  }
   try {
     // For text-only input, use the gemini-pro model
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
