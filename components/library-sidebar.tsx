@@ -145,11 +145,7 @@ export function LibrarySidebar() {
               <ExternalLink className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0 text-red-500" />
               <div>
                 <p className="font-medium text-red-500">
-                  <a
-                    href="https://chatgpt.com/g/g-67492574f6e88191a786f9be1c8fbf45-bousai-buddy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a href="https://evacuation-site-finder.vercel.app/" target="_blank" rel="noopener noreferrer">
                     Evacuation Site Finder
                   </a>
                 </p>
