@@ -8,6 +8,17 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "")
 
 export async function generateAIResponse(message: string, userId: string) {
   try {
+    // Check if the user's message contains the word "allergy"
+    if (message.toLowerCase().includes("allergy")) {
+      return {
+        success: true,
+        text: `Allergy / Collagen Diseases
+Doctor: Masato Okada
+Day: Friday
+Time: 13:30 – 16:50`,
+      }
+    }
+
     // Get user-specific data
     const supabase = createClient()
 
