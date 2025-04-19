@@ -15,7 +15,7 @@ import { UserNotifications } from "@/components/user-notifications"
 import { Badge } from "@/components/ui/badge"
 import { UserHeader } from "@/components/user-header"
 import { LibrarySidebar } from "@/components/library-sidebar"
-import { ResourceSidebar } from "@/components/resource-sidebar"
+import { FloatingChatButton } from "@/components/chat/floating-chat-button"
 
 export default function UserDashboard() {
   // State for assigned action flows
@@ -243,14 +243,14 @@ export default function UserDashboard() {
         {/* Add notifications at the top */}
         {user && !isLoading && <UserNotifications actionFlows={assignedFlows} userId={user.id} />}
 
-        {/* New layout with both sidebars */}
+        {/* New layout with sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Information sidebar (left) */}
+          {/* Library sidebar */}
           <div className="lg:col-span-1">
             <LibrarySidebar />
           </div>
 
-          {/* Action flows (center) */}
+          {/* Action flows */}
           <div className="lg:col-span-2">
             {isLoading ? (
               <div className="flex justify-center items-center py-8">
@@ -382,12 +382,11 @@ export default function UserDashboard() {
             )}
           </div>
 
-          {/* Resources sidebar (right) */}
-          <div className="lg:col-span-1">
-            <ResourceSidebar />
-          </div>
+          {/* Empty right column for visual separation */}
+          <div className="lg:col-span-1">{/* This column intentionally left empty as per requirements */}</div>
         </div>
       </main>
+      <FloatingChatButton />
     </div>
   )
 }

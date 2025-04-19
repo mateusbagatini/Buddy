@@ -64,7 +64,8 @@
     "uuid": "latest",
     "@dnd-kit/sortable": "latest",
     "@dnd-kit/utilities": "latest",
-    "@dnd-kit/modifiers": "latest"
+    "@dnd-kit/modifiers": "latest",
+    "@google/generative-ai": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

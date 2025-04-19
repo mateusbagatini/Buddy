@@ -204,6 +204,12 @@ const enTranslations = {
   "actionFlow.createNew": "Create New Action Flow",
   "actionFlow.taskDeadline": "Task Deadline",
   "actionFlow.taskDeadlinePlaceholder": "Set a deadline for this task",
+  chat: {
+    assistant: "AI Assistant",
+    typeMessage: "Type a message...",
+    thinking: "Thinking...",
+    openChat: "Open chat assistant",
+  },
 }
 
 // Japanese translations - Placeholder translations, needs review
