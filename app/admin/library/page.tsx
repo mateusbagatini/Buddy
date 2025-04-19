@@ -152,19 +152,26 @@ export default function AdminLibrary() {
 
       if (isEditMode && currentItem.id) {
         // Update existing item
-        const { error } = await supabase
-          .from("library_items")
-          .update({
-            title: currentItem.title,
-            description: currentItem.description,
-            url: currentItem.url,
-            display_location: currentItem.display_location || "right",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", currentItem.id)
+        const updateData = {
+          title: currentItem.title,
+          description: currentItem.description,
+          url: currentItem.url,
+          display_location: currentItem.display_location || "right",
+          updated_at: new Date().toISOString(),
+        }
+
+        console.log("Updating library item with data:", updateData)
+
+        const { error } = await supabase.from("library_items").update(updateData).eq("id", currentItem.id)
 
         if (error) {
-          throw error
+          console.error("Error updating library item in Supabase:", error)
+          toast({
+            title: "Error",
+            description: `Failed to update library item: ${error.message}`,
+            variant: "destructive",
+          })
+          return
         }
 
         // Update local state
@@ -188,18 +195,25 @@ export default function AdminLibrary() {
         })
       } else {
         // Create new item
-        const { data, error } = await supabase
-          .from("library_items")
-          .insert({
-            title: currentItem.title,
-            description: currentItem.description,
-            url: currentItem.url,
-            display_location: currentItem.display_location || "right",
-          })
-          .select()
+        const insertData = {
+          title: currentItem.title,
+          description: currentItem.description,
+          url: currentItem.url,
+          display_location: currentItem.display_location || "right",
+        }
+
+        console.log("Creating library item with data:", insertData)
+
+        const { data, error } = await supabase.from("library_items").insert(insertData).select()
 
         if (error) {
-          throw error
+          console.error("Error creating library item in Supabase:", error)
+          toast({
+            title: "Error",
+            description: `Failed to create library item: ${error.message}`,
+            variant: "destructive",
+          })
+          return
         }
 
         // Update local state
