@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ExternalLink, AlertCircle, BookOpen } from "lucide-react"
+import { ExternalLink, AlertCircle, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useLanguage } from "@/contexts/language-context"
@@ -16,7 +16,7 @@ type LibraryItem = {
   created_at: string
 }
 
-export function LibrarySidebar() {
+export function InformationSidebar() {
   const [items, setItems] = useState<LibraryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -29,16 +29,16 @@ export function LibrarySidebar() {
         setIsLoading(true)
         setError("")
 
-        // Fetch library items for the right sidebar
+        // Fetch library items for the left sidebar
         const { data, error: itemsError } = await supabase
           .from("library_items")
           .select("*")
-          .eq("display_location", "right")
+          .eq("display_location", "left")
           .order("created_at", { ascending: false })
 
         if (itemsError) {
-          console.error("Error loading library items:", itemsError)
-          setError(`Error loading library: ${itemsError.message}`)
+          console.error("Error loading information items:", itemsError)
+          setError(`Error loading information: ${itemsError.message}`)
           return
         }
 
@@ -78,8 +78,8 @@ export function LibrarySidebar() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
-            <BookOpen className="h-5 w-5 mr-2" />
-            {t("common.resources")}
+            <Info className="h-5 w-5 mr-2" />
+            {t("common.information")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -103,7 +103,7 @@ export function LibrarySidebar() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">{t("library.noResourceItems")}</p>
+            <p className="text-sm text-muted-foreground">{t("library.noInformationItems")}</p>
           )}
         </CardContent>
       </Card>

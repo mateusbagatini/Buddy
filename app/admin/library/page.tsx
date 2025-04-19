@@ -1,5 +1,7 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
+
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -24,6 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AdminHeader } from "@/components/admin-header"
 import { useLanguage } from "@/contexts/language-context"
 import Link from "next/link"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 // Define the LibraryItem type
 type LibraryItem = {
@@ -31,6 +34,7 @@ type LibraryItem = {
   title: string
   description: string | null
   url: string
+  display_location: "left" | "right"
   created_at: string
 }
 
@@ -45,6 +49,7 @@ export default function AdminLibrary() {
     title: "",
     description: "",
     url: "",
+    display_location: "right",
   })
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -153,6 +158,7 @@ export default function AdminLibrary() {
             title: currentItem.title,
             description: currentItem.description,
             url: currentItem.url,
+            display_location: currentItem.display_location || "right",
             updated_at: new Date().toISOString(),
           })
           .eq("id", currentItem.id)
@@ -170,6 +176,7 @@ export default function AdminLibrary() {
                   title: currentItem.title!,
                   description: currentItem.description || null,
                   url: currentItem.url!,
+                  display_location: currentItem.display_location as "left" | "right",
                 }
               : item,
           ),
@@ -187,6 +194,7 @@ export default function AdminLibrary() {
             title: currentItem.title,
             description: currentItem.description,
             url: currentItem.url,
+            display_location: currentItem.display_location || "right",
           })
           .select()
 
@@ -204,7 +212,7 @@ export default function AdminLibrary() {
       }
 
       // Reset form and close dialog
-      setCurrentItem({ title: "", description: "", url: "" })
+      setCurrentItem({ title: "", description: "", url: "", display_location: "right" })
       setIsDialogOpen(false)
       setIsEditMode(false)
     } catch (err) {
@@ -257,7 +265,7 @@ export default function AdminLibrary() {
   // Handle dialog close
   const handleDialogClose = () => {
     setIsDialogOpen(false)
-    setCurrentItem({ title: "", description: "", url: "" })
+    setCurrentItem({ title: "", description: "", url: "", display_location: "right" })
     setIsEditMode(false)
   }
 
@@ -271,7 +279,7 @@ export default function AdminLibrary() {
             <DialogTrigger asChild>
               <Button
                 onClick={() => {
-                  setCurrentItem({ title: "", description: "", url: "" })
+                  setCurrentItem({ title: "", description: "", url: "", display_location: "right" })
                   setIsEditMode(false)
                 }}
                 disabled={!tableExists}
@@ -320,6 +328,29 @@ export default function AdminLibrary() {
                       placeholder="https://example.com"
                       required
                     />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Display Location</Label>
+                    <RadioGroup
+                      value={currentItem.display_location || "right"}
+                      onValueChange={(value) =>
+                        setCurrentItem({ ...currentItem, display_location: value as "left" | "right" })
+                      }
+                      className="flex space-x-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="left" id="left" />
+                        <Label htmlFor="left" className="cursor-pointer">
+                          Left Sidebar (Information)
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="right" id="right" />
+                        <Label htmlFor="right" className="cursor-pointer">
+                          Right Sidebar (Resources)
+                        </Label>
+                      </div>
+                    </RadioGroup>
                   </div>
                 </div>
                 <DialogFooter>
@@ -374,7 +405,15 @@ export default function AdminLibrary() {
                         </Button>
                       </div>
                     </CardTitle>
-                    <CardDescription>{new Date(item.created_at).toLocaleDateString()}</CardDescription>
+                    <CardDescription className="flex justify-between">
+                      <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                      <Badge
+                        variant="outline"
+                        className={item.display_location === "left" ? "bg-blue-50" : "bg-green-50"}
+                      >
+                        {item.display_location === "left" ? "Left Sidebar" : "Right Sidebar"}
+                      </Badge>
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{item.description || "No description provided."}</p>
