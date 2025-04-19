@@ -4,16 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import {
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  ListChecks,
-  Layers,
-  MessageCircle,
-  FileText,
-  ExternalLink,
-} from "lucide-react"
+import { Clock, CheckCircle, AlertCircle, ListChecks, Layers, MessageCircle } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
@@ -25,24 +16,9 @@ import { Badge } from "@/components/ui/badge"
 import { UserHeader } from "@/components/user-header"
 import { LibrarySidebar } from "@/components/library-sidebar"
 
-// Remove duplicate import
-// import { determineFlowStatus } from "@/lib/utils"
-
-type LibraryItem = {
-  id: string
-  title: string
-  description: string | null
-  url: string
-  file_path: string | null
-  type: "link" | "file"
-  created_at: string
-}
-
 export default function UserDashboard() {
   // State for assigned action flows
   const [assignedFlows, setAssignedFlows] = useState([])
-  const [libraryLinks, setLibraryLinks] = useState<LibraryItem[]>([])
-  const [libraryFiles, setLibraryFiles] = useState<LibraryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState(null)
   const [error, setError] = useState("")
@@ -126,25 +102,6 @@ export default function UserDashboard() {
         })
 
         setAssignedFlows(processedFlows)
-
-        // Load library items
-        const { data: libraryData, error: libraryError } = await supabase
-          .from("library_items")
-          .select("*")
-          .order("created_at", { ascending: false })
-
-        if (libraryError) {
-          console.error("Error loading library items:", libraryError)
-          setError(`Error loading library items: ${libraryError.message}`)
-          return
-        }
-
-        // Separate links and files
-        const links = libraryData.filter((item) => item.type === "link")
-        const files = libraryData.filter((item) => item.type === "file")
-
-        setLibraryLinks(links)
-        setLibraryFiles(files)
       } catch (error) {
         console.error("Error loading user data:", error)
         setError(`Unexpected error: ${error.message}`)
@@ -390,7 +347,7 @@ export default function UserDashboard() {
                             <div className="flex justify-end">
                               <div
                                 className={`px-2 py-1 rounded-full text-xs ${
-                                  flowStatus === "Completed"
+                                  flowStatus === "Completed" && isApproved
                                     ? "bg-green-100 text-green-800"
                                     : flowStatus === "In Progress"
                                       ? "bg-blue-100 text-blue-800"
@@ -403,28 +360,7 @@ export default function UserDashboard() {
                           </div>
                         </CardContent>
                         <CardFooter>
-                          <div className="w-full flex justify-between">
-                            <div className="flex items-center">
-                              {libraryLinks.length > 0 && (
-                                <div className="mr-4">
-                                  <span className="text-sm font-medium">Useful Information:</span>
-                                  <ul className="list-disc ml-4 text-sm">
-                                    {libraryLinks.map((item) => (
-                                      <li key={item.id}>
-                                        <a
-                                          href={item.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-blue-600 hover:underline"
-                                        >
-                                          {item.title}
-                                        </a>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
+                          <div className="w-full flex justify-end">
                             <Link href={`/user/action-flows/${flow.id}`}>
                               <Button variant={isCompleted && isApproved ? "outline" : "default"}>
                                 {isCompleted && isApproved ? t("actionFlow.viewDetails") : t("common.continue")}
@@ -445,40 +381,8 @@ export default function UserDashboard() {
             )}
           </div>
 
-          {/* Library files */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Library Files</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {libraryFiles.length > 0 ? (
-                  <ul className="space-y-2">
-                    {libraryFiles.map((file) => (
-                      <li key={file.id} className="border-b p-3 last:border-b-0">
-                        <a
-                          href={file.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between hover:bg-gray-50 rounded p-2 -m-2 transition-colors"
-                        >
-                          <div className="flex items-center">
-                            <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="text-sm font-medium text-gray-800 truncate">{file.title}</span>
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-gray-500" />
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-gray-500">No files available.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          {/* Empty right column for visual separation */}
+          <div className="lg:col-span-1">{/* This column intentionally left empty as per requirements */}</div>
         </div>
       </main>
     </div>
