@@ -1,7 +1,5 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -26,7 +24,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AdminHeader } from "@/components/admin-header"
 import { useLanguage } from "@/contexts/language-context"
 import Link from "next/link"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 // Define the LibraryItem type
 type LibraryItem = {
@@ -34,7 +31,6 @@ type LibraryItem = {
   title: string
   description: string | null
   url: string
-  display_location: "left" | "right"
   created_at: string
 }
 
@@ -49,7 +45,6 @@ export default function AdminLibrary() {
     title: "",
     description: "",
     url: "",
-    display_location: "right",
   })
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -152,26 +147,18 @@ export default function AdminLibrary() {
 
       if (isEditMode && currentItem.id) {
         // Update existing item
-        const updateData = {
-          title: currentItem.title,
-          description: currentItem.description,
-          url: currentItem.url,
-          display_location: currentItem.display_location || "right",
-          updated_at: new Date().toISOString(),
-        }
-
-        console.log("Updating library item with data:", updateData)
-
-        const { error } = await supabase.from("library_items").update(updateData).eq("id", currentItem.id)
+        const { error } = await supabase
+          .from("library_items")
+          .update({
+            title: currentItem.title,
+            description: currentItem.description,
+            url: currentItem.url,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", currentItem.id)
 
         if (error) {
-          console.error("Error updating library item in Supabase:", error)
-          toast({
-            title: "Error",
-            description: `Failed to update library item: ${error.message}`,
-            variant: "destructive",
-          })
-          return
+          throw error
         }
 
         // Update local state
@@ -183,7 +170,6 @@ export default function AdminLibrary() {
                   title: currentItem.title!,
                   description: currentItem.description || null,
                   url: currentItem.url!,
-                  display_location: currentItem.display_location as "left" | "right",
                 }
               : item,
           ),
@@ -195,25 +181,17 @@ export default function AdminLibrary() {
         })
       } else {
         // Create new item
-        const insertData = {
-          title: currentItem.title,
-          description: currentItem.description,
-          url: currentItem.url,
-          display_location: currentItem.display_location || "right",
-        }
-
-        console.log("Creating library item with data:", insertData)
-
-        const { data, error } = await supabase.from("library_items").insert(insertData).select()
+        const { data, error } = await supabase
+          .from("library_items")
+          .insert({
+            title: currentItem.title,
+            description: currentItem.description,
+            url: currentItem.url,
+          })
+          .select()
 
         if (error) {
-          console.error("Error creating library item in Supabase:", error)
-          toast({
-            title: "Error",
-            description: `Failed to create library item: ${error.message}`,
-            variant: "destructive",
-          })
-          return
+          throw error
         }
 
         // Update local state
@@ -226,7 +204,7 @@ export default function AdminLibrary() {
       }
 
       // Reset form and close dialog
-      setCurrentItem({ title: "", description: "", url: "", display_location: "right" })
+      setCurrentItem({ title: "", description: "", url: "" })
       setIsDialogOpen(false)
       setIsEditMode(false)
     } catch (err) {
@@ -279,7 +257,7 @@ export default function AdminLibrary() {
   // Handle dialog close
   const handleDialogClose = () => {
     setIsDialogOpen(false)
-    setCurrentItem({ title: "", description: "", url: "", display_location: "right" })
+    setCurrentItem({ title: "", description: "", url: "" })
     setIsEditMode(false)
   }
 
@@ -293,7 +271,7 @@ export default function AdminLibrary() {
             <DialogTrigger asChild>
               <Button
                 onClick={() => {
-                  setCurrentItem({ title: "", description: "", url: "", display_location: "right" })
+                  setCurrentItem({ title: "", description: "", url: "" })
                   setIsEditMode(false)
                 }}
                 disabled={!tableExists}
@@ -342,29 +320,6 @@ export default function AdminLibrary() {
                       placeholder="https://example.com"
                       required
                     />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Display Location</Label>
-                    <RadioGroup
-                      value={currentItem.display_location || "right"}
-                      onValueChange={(value) =>
-                        setCurrentItem({ ...currentItem, display_location: value as "left" | "right" })
-                      }
-                      className="flex space-x-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="left" id="left" />
-                        <Label htmlFor="left" className="cursor-pointer">
-                          Left Sidebar (Information)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="right" id="right" />
-                        <Label htmlFor="right" className="cursor-pointer">
-                          Right Sidebar (Resources)
-                        </Label>
-                      </div>
-                    </RadioGroup>
                   </div>
                 </div>
                 <DialogFooter>
@@ -419,15 +374,7 @@ export default function AdminLibrary() {
                         </Button>
                       </div>
                     </CardTitle>
-                    <CardDescription className="flex justify-between">
-                      <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                      <Badge
-                        variant="outline"
-                        className={item.display_location === "left" ? "bg-blue-50" : "bg-green-50"}
-                      >
-                        {item.display_location === "left" ? "Left Sidebar" : "Right Sidebar"}
-                      </Badge>
-                    </CardDescription>
+                    <CardDescription>{new Date(item.created_at).toLocaleDateString()}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{item.description || "No description provided."}</p>
