@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { MessageCircle, Clock } from "lucide-react"
+import { MessageCircle, Clock, AlertCircle } from "lucide-react"
 import { NotificationAccordion } from "@/components/notification-accordion"
 import { loadDismissedMessages, dismissMessage } from "@/lib/message-utils"
 import { useLanguage } from "@/contexts/language-context"
@@ -46,9 +46,11 @@ export function AdminNotifications({ actionFlows = [], userId = "" }) {
   const [notifications, setNotifications] = useState<{
     messages: Notification[]
     deadlines: Notification[]
+    taskRefusals: Notification[] // Add this new category
   }>({
     messages: [],
     deadlines: [],
+    taskRefusals: [],
   })
 
   const [users, setUsers] = useState<Record<string, string>>({})
@@ -83,11 +85,13 @@ export function AdminNotifications({ actionFlows = [], userId = "" }) {
     // Process action flows to find notifications
     const messageNotifications: Notification[] = []
     const deadlineNotifications: Notification[] = []
+    const taskRefusalNotifications: Notification[] = [] // Add this new array
 
     if (!Array.isArray(actionFlows) || !userId) {
       setNotifications({
         messages: [],
         deadlines: [],
+        taskRefusals: [],
       })
       return
     }
@@ -101,24 +105,30 @@ export function AdminNotifications({ actionFlows = [], userId = "" }) {
         flow.sections.forEach((section) => {
           if (section && section.tasks && Array.isArray(section.tasks)) {
             section.tasks.forEach((task) => {
+              // Check for tasks that need attention (were refused)
+              if (task && task.completed && task.approval_status === "refused") {
+                taskRefusalNotifications.push({
+                  id: uuidv4(),
+                  flowId: flow.id,
+                  sectionId: section.id,
+                  taskId: task.id,
+                  taskTitle: `${task.title || "Untitled Task"}`,
+                  flowTitle: flow.title || "Untitled Flow",
+                  assignedTo: flow.user_id ? users[flow.user_id] || "Unknown User" : "Unassigned",
+                })
+              }
+
               // Check for unread messages - only include actual user messages
               if (task.messages && Array.isArray(task.messages)) {
                 task.messages.forEach((msg) => {
-                  if (
-                    msg &&
-                    msg.sender_id !== userId &&
-                    !msg.read &&
-                    !msg.dismissed &&
-                    msg.text &&
-                    typeof msg.text === "string"
-                  ) {
+                  if (msg && !msg.read && !msg.dismissed && msg.text && typeof msg.text === "string") {
                     messageNotifications.push({
                       id: uuidv4(),
                       flowId: flow.id,
                       sectionId: section.id,
                       taskId: task.id,
-                      taskTitle: `${task.title}`,
-                      flowTitle: flow.title,
+                      taskTitle: `${task.title || "Untitled Task"}`,
+                      flowTitle: flow.title || "Untitled Flow",
                       assignedTo: flow.user_id ? users[flow.user_id] || "Unknown User" : "Unassigned",
                       messageId: msg.id, // Store the message ID for dismissal
                     })
@@ -135,8 +145,8 @@ export function AdminNotifications({ actionFlows = [], userId = "" }) {
                     flowId: flow.id,
                     sectionId: section.id,
                     taskId: task.id,
-                    taskTitle: `${task.title}`,
-                    flowTitle: flow.title,
+                    taskTitle: `${task.title || "Untitled Task"}`,
+                    flowTitle: flow.title || "Untitled Flow",
                     deadline: new Date(task.deadline).toLocaleDateString(),
                     assignedTo: flow.user_id ? users[flow.user_id] || "Unknown User" : "Unassigned",
                   })
@@ -151,6 +161,7 @@ export function AdminNotifications({ actionFlows = [], userId = "" }) {
     setNotifications({
       messages: messageNotifications,
       deadlines: deadlineNotifications,
+      taskRefusals: taskRefusalNotifications,
     })
   }, [actionFlows, userId, users])
 
@@ -195,7 +206,11 @@ export function AdminNotifications({ actionFlows = [], userId = "" }) {
     console.log("Deadline notifications cannot be dismissed")
   }
 
-  if (notifications.messages.length === 0 && notifications.deadlines.length === 0) {
+  if (
+    notifications.messages.length === 0 &&
+    notifications.deadlines.length === 0 &&
+    notifications.taskRefusals.length === 0
+  ) {
     return null
   }
 
@@ -217,6 +232,16 @@ export function AdminNotifications({ actionFlows = [], userId = "" }) {
         type="deadline"
         onDismiss={dismissDeadline}
         onDismissAll={dismissAllDeadlines}
+      />
+
+      {/* Add task refusal notifications */}
+      <NotificationAccordion
+        title="Tasks That Need Attention"
+        icon={<AlertCircle className="h-5 w-5 text-red-600" />}
+        notifications={notifications.taskRefusals}
+        type="task_refused"
+        onDismiss={() => {}} // These can't be dismissed
+        onDismissAll={() => {}} // These can't be dismissed
       />
     </div>
   )
